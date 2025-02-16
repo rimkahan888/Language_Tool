@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>French Vocabulary App</title>
+    <style>
+        /* --- Reset and Base Styles --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #5d4c3b; /* Dark Brown Cream Color */
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            color: #b89191; /* Light Grey Text */
+            font-size: 16px;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #debaba; /* Light Grey Text */
+            margin-bottom: 20px;
+        }
+
+        /* --- Auto Flip Button Styles --- */
+        #autoFlipButton {
+            display: block;
+            margin: 0 auto 20px auto;
+            padding: 14px 28px;
+            background-color: #8B5E3C; /* Dark Brown */
+            color: #d3d3d3; /* Light Grey Text */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: background-color 0.3s;
+        }
+
+        #autoFlipButton.active {
+            background-color: #A67B4D; /* Slightly Lighter Brown when active */
+        }
+
+        /* --- Card Container Styles --- */
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); /* Responsive columns */
+            gap: 5px; /* 5px gaps both vertically and horizontally */
+            max-width: 100%;
+            margin: 0 auto 30px auto;
+        }
+
+        .card {
+            perspective: 1000px;
+            width: 100%;
+            height: 0; /* Height controlled by padding-top */
+            padding-top: 60.75%; /* 150% increase from previous 12.5% */
+            position: relative;
+        }
+
+        .card-inner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border: 1px solid #555; /* Darker border for better contrast */
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+            background-color: #49710c; /* Dark Brown Cream Color for front */
+            color: #d3d3d3; /* Light Grey Text */
+            cursor: pointer;
+            word-wrap: break-word;
+            text-align: center;
+            font-size: 16px; /* Increased font size for better readability */
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            background-color: #281f15; /* Slightly Lighter Brown for back */
+            font-size: 14px; /* Slightly smaller font for French meanings */
+        }
+
+        /* --- Custom Quiz Styles --- */
+        .controls {
+            text-align: center;
+            margin-bottom: 15px; /* Slightly reduced margin */
+        }
+
+        .controls button {
+            padding: 10px 20px; /* Slightly reduced padding */
+            background-color: #000000; /* Black Matte Background */
+            color: #d3d3d3; /* Very Light Grey Text */
+            border: 1px solid #555555; /* Darker Border for Contrast */
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px; /* Reduced font size from 18px to 16px */
+            transition: background-color 0.3s, transform 0.2s, border-color 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .controls button:hover {
+            background-color: #333333; /* Slightly Lighter Grey on Hover */
+            transform: scale(1.05);
+        }
+
+        /* --- Quiz Container: Two Rows Layout --- */
+        .quiz-container {
+            display: flex;
+            flex-direction: column; /* Arrange rows vertically */
+            align-items: center; /* Center align rows horizontally */
+            gap: 30px; /* Gap between the two rows */
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .quiz-row {
+            display: flex;
+            flex-wrap: nowrap; /* Prevent wrapping into multiple rows */
+            justify-content: center;
+            gap: 15px; /* Gap between buttons within a row */
+            width: 100%;
+            max-width: 1200px; /* Increased maximum width */
+            overflow-x: hidden; /* Hide horizontal scroll */
+        }
+
+        /* Removed the headers within quiz-row */
+        .quiz-row h2 {
+            display: none; /* Hide the headers */
+        }
+
+        .word-list {
+            display: flex;
+            flex-wrap: nowrap; /* Ensure single row */
+            gap: 10px; /* Gap between buttons */
+            justify-content: center;
+            list-style: none; /* Remove bullet points */
+            padding: 0; /* Remove default padding */
+            margin: 0; /* Remove default margin */
+            overflow-x: hidden; /* Hide horizontal scroll */
+        }
+
+        .word-list button {
+            background-color: #000000; /* Black Matte Background */
+            padding: 10px 15px; /* Slightly reduced padding */
+            border: 1px solid #555555; /* Darker Border for Contrast */
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s, border-color 0.3s;
+            color: #b39191; /* Very Light Grey Text */
+            text-align: center;
+            font-size: 14px; /* Increased font size from 12px to 14px for better readability */
+            min-width: 90px; /* Reduced min-width to fit more buttons */
+            white-space: nowrap; /* Prevent text from wrapping within buttons */
+        }
+
+        .word-list button:hover {
+            background-color: #333333; /* Slightly Lighter Grey on Hover */
+            transform: scale(1.02);
+        }
+
+        /* Selection Highlight - Light Grey */
+        .selected {
+            background-color: #d3d3d3; /* Light Grey */
+            border-color: #ffffff; /* White Border for Contrast */
+            color: #000000; /* Black Text for Contrast */
+        }
+
+        /* Feedback Messages */
+        .feedback {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px; /* Slightly increased font size */
+            color: #d3d3d3; /* Very Light Grey Text */
+            min-height: 24px; /* To maintain space even when empty */
+        }
+
+        /* Score Display */
+        .score {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 16px; /* Slightly reduced font size */
+            color: #d3d3d3; /* Very Light Grey Text */
+        }
+
+        /* --- Example Sentences Section --- */
+        #sentences {
+            max-width: 1200px; /* Increased max-width to accommodate 4 columns */
+            margin: 0 auto;
+            background-color: #3a3a3a;
+            padding: 20px;
+            border-radius: 10px;
+            max-height: 80vh; /* Optional: Set a max height for better layout */
+            overflow-y: auto; /* Enable scrolling if content exceeds max-height */
+            /* Use CSS Multi-Column Layout */
+            column-count: 4;
+            column-gap: 20px;
+        }
+
+        .sentence {
+            background-color: #4a4a4a; /* Slightly lighter background for sentences */
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 0.75rem;
+            font-size: 16px;
+            break-inside: avoid; /* Prevent sentences from breaking between columns */
+        }
+
+        .sentence strong {
+            color: #8f6b6b;
+        }
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 1600px) {
+            /* Optional: Adjust column count for very large screens */
+            #sentences {
+                column-count: 4;
+            }
+        }
+
+        @media (max-width: 1400px) {
+            .quiz-row {
+                max-width: 1000px; /* Increase max-width for medium-large screens */
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .card-container {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+
+            .card-front, .card-back {
+                font-size: 15px;
+                padding: 12px;
+            }
+
+            #autoFlipButton {
+                font-size: 18px;
+                padding: 12px 24px;
+            }
+
+            /* Maintain four columns */
+            #sentences {
+                column-count: 4;
+            }
+        }
+
+        @media (max-width: 1200px) and (min-width: 900px) {
+            #sentences {
+                column-count: 3; /* Reduce to 3 columns for medium screens */
+            }
+        }
+
+        @media (max-width: 900px) {
+            .card-container {
+                grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            }
+
+            .card-front, .card-back {
+                font-size: 14px;
+                padding: 12px;
+            }
+
+            #autoFlipButton {
+                font-size: 16px;
+                padding: 10px 20px;
+            }
+
+            /* Adjust quiz rows for smaller screens */
+            .quiz-row {
+                max-width: 100%;
+            }
+
+            .word-list button {
+                min-width: 80px; /* Further reduce min-width */
+                font-size: 13px; /* Slightly smaller font size */
+            }
+
+            /* Switch to two columns on smaller screens */
+            #sentences {
+                column-count: 2;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .card-container {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+
+            .card-front, .card-back {
+                font-size: 13px;
+                padding: 10px;
+            }
+
+            #autoFlipButton {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+
+            /* Single column for small screens */
+            #sentences {
+                column-count: 1;
+            }
+
+            .word-list button {
+                min-width: 70px; /* Further reduce min-width */
+                font-size: 12px; /* Smaller font size */
+                padding: 8px 10px; /* Reduce padding */
+            }
+        }
+
+        @media (max-width: 400px) {
+            .card-container {
+                grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            }
+
+            .card-front, .card-back {
+                font-size: 12px;
+                padding: 10px;
+            }
+
+            #autoFlipButton {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            /* Single column for very small screens */
+            #sentences {
+                column-count: 1;
+            }
+
+            .word-list button {
+                min-width: 60px; /* Further reduce min-width */
+                font-size: 11px; /* Smaller font size */
+                padding: 6px 8px; /* Reduce padding */
+            }
+        }
+
+        /* --- Optional: Hide scrollbar for quiz rows if not desired --- */
+        .quiz-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .quiz-row {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        /* Focus Styles for Accessibility */
+        .word-list button:focus {
+            outline: 2px solid #ffffff; /* White outline on focus */
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>French Vocabulary App</h1>
+
+    <!-- --- Custom Card-Flipping Section --- -->
+    <button aria-label="Start or Stop Auto Flip" id="autoFlipButton">Start Auto Flip</button>
+    <div class="card-container" id="cardContainer">
+        <!-- Cards will be dynamically generated here -->
+    </div>
+
+    <!-- --- Custom Quiz Section: Two Rows Layout --- -->
+    <section id="custom-quiz">
+        <h2>French Vocabulary Quiz</h2>
+        <div class="controls">
+            <button id="startQuizBtn">Start Quiz</button>
+        </div>
+        <div class="quiz-container">
+            <!-- English Words Row -->
+            <div class="quiz-row">
+                <!-- Removed the English Words header -->
+                <ul class="word-list" id="englishList">
+                    <!-- English words buttons will be injected here -->
+                </ul>
+            </div>
+            <!-- French Words Row -->
+            <div class="quiz-row">
+                <!-- Removed the French Words header -->
+                <ul class="word-list" id="frenchList">
+                    <!-- French words buttons will be injected here -->
+                </ul>
+            </div>
+        </div>
+        <div class="score" id="score">Score: 0/10</div>
+        <div class="feedback" id="feedback"></div>
+    </section>
+
+    <!-- --- Example Sentences Section --- -->
+    <section id="sentences">
+        <h2>Example Sentences</h2>
+        <div id="sentence-container">
+            <!-- Example sentences will be injected here -->
+        </div>
+    </section>
+
+    <script>
+        /* --- Consolidated Vocabulary Data --- */
+        const vocabulary = [
+        { id: 1, french: "Assister", english: "Attend", sentence: "Je vais assister à une projection de film ce soir." },
+        { id: 2, french: "Voir", english: "View", sentence: "Nous avons pu voir un film intéressant au cinéma hier." },
+        { id: 3, french: "Regarder", english: "Watch", sentence: "J'aime regarder des films d'action pendant le weekend." },
+        { id: 4, french: "Voir", english: "See", sentence: "Je peux voir le grand écran depuis mon siège." },
+        { id: 5, french: "Vivre", english: "Experience", sentence: "Vivre une expérience immersive au cinéma est toujours excitant." },
+        { id: 6, french: "Apprécier", english: "Appreciate", sentence: "J'apprécie la qualité du son dans ce cinéma." },
+        { id: 7, french: "Percevoir", english: "Perceive", sentence: "Il est difficile de percevoir tous les détails dans une scène sombre." },
+        { id: 8, french: "Comprendre", english: "Comprehend", sentence: "Il faut vraiment comprendre l'histoire pour apprécier ce film." },
+        { id: 9, french: "Évaluer", english: "Evaluate", sentence: "J'aime évaluer les performances des acteurs après avoir vu un film." },
+        { id: 10, french: "Juger", english: "Judge", sentence: "Ne jugez pas un film avant de l'avoir vu jusqu'à la fin." },
+        { id: 11, french: "Réagir", english: "React", sentence: "Le public a réagi vivement à la scène finale." },
+        { id: 12, french: "Ressentir", english: "Feel", sentence: "J'ai ressenti beaucoup d'émotions en regardant ce film." },
+        { id: 13, french: "Apprendre", english: "Learn", sentence: "On peut apprendre beaucoup en regardant des films étrangers." },
+        { id: 14, french: "Acquérir", english: "Acquire", sentence: "J'ai acquis une meilleure compréhension des cultures étrangères grâce aux films." },
+        { id: 15, french: "Profiter", english: "Enjoy", sentence: "Profite du film, il a reçu d'excellentes critiques." },
+        { id: 16, french: "Planifier", english: "Schedule", sentence: "Nous devons planifier une réunion pour discuter du projet." },
+        { id: 17, french: "Réfléchir ensemble", english: "Brainstorm", sentence: "L'équipe va réfléchir ensemble sur de nouvelles idées." },
+        { id: 18, french: "Être d’accord", english: "Agree", sentence: "Nous devons être d'accord sur les objectifs de la réunion." },
+        { id: 19, french: "Écouter", english: "Listen", sentence: "Il est important d'écouter tous les participants pendant la réunion." },
+        { id: 20, french: "Résumer", english: "Summarize", sentence: "Je vais résumer les points principaux de la réunion." },
+        { id: 21, french: "Communiquer", english: "Communicate", sentence: "Nous devons communiquer clairement les résultats de la réunion." },
+        { id: 22, french: "Planifier", english: "Plan", sentence: "Il faut planifier la prochaine étape du projet." },
+        { id: 23, french: "Faire un suivi", english: "Follow up", sentence: "Je ferai un suivi après la réunion pour confirmer les actions." },
+        { id: 24, french: "Faire des achats", english: "Shop", sentence: "J'adore faire des achats pendant les soldes." },
+        { id: 25, french: "Parcourir", english: "Browse", sentence: "J'aime parcourir les boutiques avant de décider quoi acheter." },
+        { id: 26, french: "Essayer", english: "Try on", sentence: "Je vais essayer cette robe pour voir si elle me va bien." },
+        { id: 27, french: "Marchander", english: "Bargain", sentence: "Il est possible de marchander le prix dans certains marchés." },
+        { id: 28, french: "Commander", english: "Order", sentence: "J'ai décidé de commander ce produit en ligne." },
+        { id: 29, french: "Réserver", english: "Reserve", sentence: "Nous devons réserver une table avant d'aller dîner." },
+        { id: 30, french: "Livrer", english: "Deliver", sentence: "Ils vont livrer la commande demain matin." },
+        { id: 31, french: "Chercher", english: "Look for", sentence: "Je cherche une paire de chaussures pour l'hiver." },
+        { id: 32, french: "Récupérer", english: "Pick up", sentence: "Tu peux récupérer ton colis au point de retrait." },
+        { id: 33, french: "Porter", english: "Carry", sentence: "Je vais porter ces sacs jusqu'à la voiture." },
+        { id: 34, french: "Vérifier", english: "Check", sentence: "N'oublie pas de vérifier le prix avant d'acheter." },
+        { id: 35, french: "Économiser", english: "Save", sentence: "J'essaie d'économiser pour acheter une nouvelle télévision." },
+        { id: 36, french: "Dépenser", english: "Spend", sentence: "J'ai dépensé beaucoup d'argent pendant les vacances." },
+        { id: 37, french: "Emballer", english: "Wrap", sentence: "Pouvez-vous emballer ce cadeau, s'il vous plaît?" },
+        { id: 38, french: "Attendre", english: "Wait", sentence: "Il faut attendre cinq minutes avant que notre commande soit prête." },
+        { id: 39, french: "Offrir", english: "Gift", sentence: "J'aimerais offrir ce livre en cadeau à mon ami." },
+        { id: 40, french: "Cuisiner", english: "Cook", sentence: "Ce soir, je vais cuisiner un plat italien." },
+        { id: 41, french: "Faire bouillir", english: "Boil", sentence: "Il faut faire bouillir de l'eau pour les pâtes." },
+        { id: 42, french: "Frire", english: "Fry", sentence: "J'adore frire des pommes de terre pour accompagner le steak." },
+        { id: 43, french: "Cuire au four", english: "Bake", sentence: "Cette tarte doit cuire au four pendant 45 minutes." },
+        { id: 44, french: "Rôtir", english: "Roast", sentence: "Nous allons rôtir un poulet pour le dîner de dimanche." },
+        { id: 45, french: "Hacher", english: "Chop", sentence: "Il faut hacher finement les oignons pour cette recette." },
+        { id: 46, french: "Trancher", english: "Slice", sentence: "Je vais trancher les tomates pour la salade." },
+        { id: 47, french: "Remuer", english: "Stir", sentence: "N'oublie pas de remuer la sauce pour éviter qu'elle colle." },
+        { id: 48, french: "Assaisonner", english: "Season", sentence: "Il est important d'assaisonner la viande correctement." },
+        { id: 49, french: "Servir", english: "Serve", sentence: "Tu peux servir le dessert maintenant." },
+        { id: 50, french: "Cuire à la vapeur", english: "Steam", sentence: "J'aime cuire mes légumes à la vapeur pour qu'ils restent croquants." },
+        { id: 51, french: "Mijoter", english: "Simmer", sentence: "Laisse la sauce mijoter à feu doux pendant 30 minutes." },
+        { id: 52, french: "Râper", english: "Grate", sentence: "Tu devrais râper un peu de fromage pour le gratin." },
+        { id: 53, french: "Éplucher", english: "Peel", sentence: "Il est plus facile d'éplucher les pommes après les avoir plongées dans l'eau chaude." },
+        { id: 54, french: "Griller", english: "Grill", sentence: "Nous allons griller du poisson pour le déjeuner." },
+        { id: 55, french: "Écraser", english: "Mash", sentence: "Je vais écraser les pommes de terre pour faire de la purée." },
+        { id: 56, french: "Verser", english: "Pour", sentence: "Il faut verser le lait doucement pour ne pas renverser." },
+        { id: 57, french: "Pétrir", english: "Knead", sentence: "Il faut pétrir la pâte pendant dix minutes pour qu'elle soit bien souple." },
+        { id: 58, french: "Mixer", english: "Blend", sentence: "Tu peux mixer les fruits pour faire un smoothie." },
+        { id: 59, french: "Chauffer", english: "Heat", sentence: "Il faut chauffer la soupe avant de la servir." },
+        { id: 60, french: "Refroidir", english: "Cool", sentence: "Laisse refroidir le gâteau avant de le découper." },
+        { id: 61, french: "Dresser", english: "Plate", sentence: "Dresse les assiettes avant que tout le monde arrive." },
+        { id: 62, french: "Voyager", english: "Travel", sentence: "J'adore voyager dans des pays étrangers pour découvrir de nouvelles cultures." },
+        { id: 63, french: "Faire ses bagages", english: "Pack", sentence: "Je vais faire mes bagages pour notre voyage demain." },
+        { id: 64, french: "Réserver", english: "Book", sentence: "Il est préférable de réserver les billets d'avion à l'avance." },
+        { id: 65, french: "Séjourner", english: "Stay", sentence: "Nous allons séjourner dans un hôtel au bord de la mer." },
+        { id: 66, french: "Enregistrer", english: "Check-in", sentence: "N'oublie pas d'enregistrer tes bagages avant le vol." },
+        { id: 67, french: "Embarquer", english: "Board", sentence: "Nous allons embarquer à bord du bateau à 10 heures." },
+        { id: 68, french: "Atterrir", english: "Land", sentence: "L'avion va atterrir dans 30 minutes." },
+        { id: 69, french: "Naviguer", english: "Navigate", sentence: "Nous devons naviguer à travers cette zone difficile en voiture." }
+    ];
+
+        const cardContainer = document.getElementById('cardContainer');
+
+        /* --- Generate Cards from Vocabulary --- */
+        vocabulary.forEach(word => {
+            const card = document.createElement('div');
+            card.classList.add('card');
+
+            const cardInner = document.createElement('div');
+            cardInner.classList.add('card-inner');
+
+            const cardFront = document.createElement('div');
+            cardFront.classList.add('card-front');
+            cardFront.textContent = word.english; // Changed from French to English
+
+            const cardBack = document.createElement('div');
+            cardBack.classList.add('card-back');
+            cardBack.textContent = word.french; // Changed from English to French
+
+            cardInner.appendChild(cardFront);
+            cardInner.appendChild(cardBack);
+            card.appendChild(cardInner);
+            cardContainer.appendChild(card);
+        });
+
+        // Handle card flipping on click
+        const allCards = document.querySelectorAll('.card');
+        allCards.forEach(card => {
+            card.addEventListener('click', () => {
+                card.classList.toggle('flipped');
+            });
+        });
+
+        /* --- Auto Flip Functionality --- */
+        const autoFlipButton = document.getElementById('autoFlipButton');
+        let autoFlipInterval;
+        let isAutoFlipping = false;
+
+        autoFlipButton.addEventListener('click', () => {
+            if (!isAutoFlipping) {
+                startAutoFlip();
+                autoFlipButton.textContent = 'Stop Auto Flip';
+                autoFlipButton.classList.add('active');
+            } else {
+                stopAutoFlip();
+                autoFlipButton.textContent = 'Start Auto Flip';
+                autoFlipButton.classList.remove('active');
+            }
+        });
+
+        function startAutoFlip() {
+            isAutoFlipping = true;
+            autoFlipInterval = setInterval(() => {
+                // Flip 20% of the cards (15 cards for 75 total)
+                const cardsToFlip = getRandomCards(Math.floor(vocabulary.length * 0.2));
+                cardsToFlip.forEach(card => card.classList.add('flipped'));
+
+                // After 4 seconds, flip them back and flip new ones
+                setTimeout(() => {
+                    cardsToFlip.forEach(card => card.classList.remove('flipped'));
+                }, 4000);
+            }, 4500); // Every 4.5 seconds: 4 seconds flip, 0.5 seconds reset
+        }
+
+        function stopAutoFlip() {
+            isAutoFlipping = false;
+            clearInterval(autoFlipInterval);
+        }
+
+        function getRandomCards(number) {
+            const shuffled = Array.from(allCards).sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, number);
+        }
+
+        /* --- Quiz Functionality: Two Rows Layout --- */
+
+        // Function to shuffle an array
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Initialize variables to store selected buttons
+        let selectedEnglish = null;
+        let selectedFrench = null;
+        let score = 0;
+
+        // Function to start the quiz
+        function startQuiz() {
+            // Reset previous quiz state
+            resetQuiz();
+
+            // Shuffle the vocabulary array and select the first 10 pairs
+            const shuffledPairs = shuffle([...vocabulary]);
+            const selectedPairs = shuffledPairs.slice(0, 10);
+
+            // Separate English and French words
+            const englishWords = selectedPairs.map(pair => ({ id: pair.id, word: pair.english }));
+            const frenchWords = selectedPairs.map(pair => ({ id: pair.id, word: pair.french }));
+
+            // Shuffle the separate lists
+            shuffle(englishWords);
+            shuffle(frenchWords);
+
+            // Populate the English and French lists in the DOM
+            const englishList = document.getElementById('englishList');
+            const frenchList = document.getElementById('frenchList');
+
+            englishWords.forEach(pair => {
+                const li = document.createElement('li');
+                const button = document.createElement('button');
+                button.textContent = pair.word;
+                button.dataset.id = pair.id; // Assign unique ID
+                button.addEventListener('click', () => handleClick(button, 'english'));
+                li.appendChild(button);
+                englishList.appendChild(li);
+            });
+
+            frenchWords.forEach(pair => {
+                const li = document.createElement('li');
+                const button = document.createElement('button');
+                button.textContent = pair.word;
+                button.dataset.id = pair.id; // Assign unique ID
+                button.addEventListener('click', () => handleClick(button, 'french'));
+                li.appendChild(button);
+                frenchList.appendChild(li);
+            });
+
+            // Initialize score and feedback
+            score = 0;
+            document.getElementById('score').textContent = `Score: ${score}/10`;
+            document.getElementById('feedback').textContent = "";
+        }
+
+        // Function to handle button clicks
+        function handleClick(button, type) {
+            // If button is already hidden, do nothing
+            if (button.style.display === 'none') return;
+
+            // If button is already selected, do nothing
+            if (button.classList.contains('selected')) return;
+
+            // Change the button's background color permanently by adding 'selected' class
+            button.classList.add('selected');
+
+            // Assign to selectedEnglish or selectedFrench based on type
+            if (type === 'english') {
+                selectedEnglish = button;
+            } else if (type === 'french') {
+                selectedFrench = button;
+            }
+
+            // Check if both selections are made
+            if (selectedEnglish && selectedFrench) {
+                checkPair();
+            }
+        }
+
+        // Function to check if selected pair is correct
+        function checkPair() {
+            if (selectedEnglish && selectedFrench) {
+                const englishId = selectedEnglish.dataset.id;
+                const frenchId = selectedFrench.dataset.id;
+
+                if (englishId === frenchId) {
+                    handleCorrectPair(englishId, frenchId);
+                } else {
+                    handleIncorrectPair();
+                }
+            }
+        }
+
+        // Function to handle correct pair
+        function handleCorrectPair(englishId, frenchId) {
+            score += 1;
+            document.getElementById('score').textContent = `Score: ${score}/10`;
+            document.getElementById('feedback').textContent = "✅ Correct Pair!";
+            document.getElementById('feedback').style.color = "green";
+
+            hidePair(englishId, frenchId);
+            resetSelections();
+
+            // Check if all pairs are completed
+            if (score === 10) {
+                document.getElementById('feedback').textContent = "🎉 Congratulations! You've matched all pairs!";
+                document.getElementById('feedback').style.color = "green";
+            }
+        }
+
+        // Function to handle incorrect pair
+        function handleIncorrectPair() {
+            document.getElementById('feedback').textContent = "❌ Incorrect Pair. Try Again!";
+            document.getElementById('feedback').style.color = "red";
+            setTimeout(() => {
+                document.getElementById('feedback').textContent = "";
+            }, 2000);
+            resetSelections();
+        }
+
+        // Function to hide correct pair
+        function hidePair(englishId, frenchId) {
+            // Hide English word
+            const englishButtons = document.querySelectorAll('#englishList button');
+            englishButtons.forEach(btn => {
+                if (btn.dataset.id === englishId) {
+                    btn.parentElement.style.display = 'none';
+                }
+            });
+
+            // Hide French word
+            const frenchButtons = document.querySelectorAll('#frenchList button');
+            frenchButtons.forEach(btn => {
+                if (btn.dataset.id === frenchId) {
+                    btn.parentElement.style.display = 'none';
+                }
+            });
+        }
+
+        // Function to reset selections
+        function resetSelections() {
+            selectedEnglish = null;
+            selectedFrench = null;
+        }
+
+        // Function to reset the entire quiz
+        function resetQuiz() {
+            // Clear English and French lists
+            document.getElementById('englishList').innerHTML = "";
+            document.getElementById('frenchList').innerHTML = "";
+
+            // Reset score and feedback
+            score = 0;
+            document.getElementById('score').textContent = `Score: ${score}/10`;
+            document.getElementById('feedback').textContent = "";
+
+            // Reset selected buttons
+            selectedEnglish = null;
+            selectedFrench = null;
+        }
+
+        // Add event listener to the Start Quiz button
+        document.getElementById('startQuizBtn').addEventListener('click', startQuiz);
+
+        /* --- Example Sentences Script --- */
+        function displaySentences() {
+            const sentenceContainer = document.getElementById('sentence-container');
+            sentenceContainer.innerHTML = ''; // Clear previous sentences
+
+            // Display sentences for all 75 vocabulary words
+            vocabulary.forEach((word) => {
+                const sentence = document.createElement('div');
+                sentence.classList.add('sentence');
+                sentence.innerHTML = `<strong>${word.english}</strong>: ${word.sentence}`;
+                sentenceContainer.appendChild(sentence);
+            });
+        }
+
+        // Display example sentences on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            displaySentences();
+        });
+    </script>
+
+</body>
+</html>
